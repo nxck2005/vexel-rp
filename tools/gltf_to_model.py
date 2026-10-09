@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Converts a glTF made of boxes (as Blockbench exports, including Sketchfab re-exports) into a Java item model.
 
-    gltf_to_model.py <model.gltf> <name> <length-in-blocks> [--skip-nodes NAME,...]
+    gltf_to_model.py <model.gltf> <name> <length-in-blocks> [--skip-nodes NAME,...] [--only-nodes NAME,...]
 
 Writes assets/vexel/models/item/vehicle/<name>.json, its textures and assets/vexel/items/<name>.json, then prints
 the model-scale and model-offset that make the model <length-in-blocks> long, sitting on y=0 and centred on x/z.
@@ -96,7 +96,9 @@ def faces_of(gltf, accessor, mesh, world):
             # Some exporters repeat shared corners as separate vertices, so match corners by position and uv.
             corners = list({(tuple(round(c, 5) for c in positions[i]), tuple(round(c, 5) for c in uvs[i])): i
                             for i in indices[t:t + 6]}.values())
-            if len(corners) != 4:
+            if len(corners) < 4:  # collapsed face (Blockbench mesh objects have these): nothing to draw
+                continue
+            if len(corners) > 4:
                 sys.exit(f"Triangles {t // 3} and {t // 3 + 1} don't make a quad")
             points = [[c + world[k][3] for k, c in enumerate(apply(world, positions[i]))] for i in corners]
             normal = apply(rotation, [sum(normals[i][k] for i in corners) for k in range(3)])
@@ -124,9 +126,15 @@ ROTATIONS = proper_rotations()
 
 
 def box_rotation(faces):
-    """The rotation closest to none whose axes line up with the box's face normals."""
+    """The rotation closest to none whose axes line up with the box's face normals and edges."""
     a = faces[0][2]
-    b = next(f[2] for f in faces if abs(sum(x * y for x, y in zip(a, f[2]))) < 0.01)
+    # An edge of the first face lies along another box axis; this also works for single flat faces.
+    corners = faces[0][0]
+    edge = next(e for e in ([q - p for p, q in zip(corners[0], c)] for c in corners[1:]) if sum(v * v for v in e) > 1e-12)
+    along = sum(x * y for x, y in zip(edge, a))
+    edge = [e - along * n for e, n in zip(edge, a)]
+    length = math.sqrt(sum(v * v for v in edge))
+    b = [v / length for v in edge]
     c = [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]
     frame = transpose([a, b, c])
     return max((mat_mul(frame, p) for p in ROTATIONS), key=lambda r: r[0][0] + r[1][1] + r[2][2])
@@ -157,6 +165,39 @@ def face_uv(direction, corners, uvs, low, high, size):
     sys.exit(f"No uv mapping fits a {direction} face of size {span}")
 
 
+def cut(element, low, high, faces):
+    """The part of element between low and high (in its own unrotated frame), with each face's uv narrowed to match."""
+    piece = {"from": low, "to": high, "faces": {}}
+    if "rotation" in element:
+        piece["rotation"] = element["rotation"]
+    start, end = element["from"], element["to"]
+    for direction, face in element["faces"].items():
+        if direction in faces:
+            if faces[direction] is not None:
+                piece["faces"][direction] = faces[direction]
+            continue
+        face = dict(face)
+        if not face.get("rotation"):
+            corners = FACE_VERTICES[direction]
+            u_axis = next(k for k in range(3) if corners[1][k] != corners[2][k])
+            v_axis = next(k for k in range(3) if corners[0][k] != corners[1][k])
+            u1, v1, u2, v2 = face["uv"]
+
+            def narrow(a, b, axis, pick_a):
+                # a belongs to the corner at pick_a (0 = min, 1 = max) on this axis, b to the other
+                at_min, at_max = (a, b) if pick_a == 0 else (b, a)
+                span = end[axis] - start[axis] or 1
+                lo_t, hi_t = (low[axis] - start[axis]) / span, (high[axis] - start[axis]) / span
+                new_min, new_max = at_min + (at_max - at_min) * lo_t, at_min + (at_max - at_min) * hi_t
+                return (new_min, new_max) if pick_a == 0 else (new_max, new_min)
+
+            u1, u2 = narrow(u1, u2, u_axis, corners[1][u_axis])
+            v1, v2 = narrow(v1, v2, v_axis, corners[0][v_axis])
+            face["uv"] = [round(v, 4) for v in (u1, v1, u2, v2)]
+        piece["faces"][direction] = face
+    return piece
+
+
 def main():
     args = sys.argv[1:]
     skip = set()
@@ -164,23 +205,32 @@ def main():
         i = args.index("--skip-nodes")
         skip = set(args[i + 1].split(","))
         del args[i:i + 2]
+    only = None  # e.g. a helicopter's rotor, converted as its own model so it can spin
+    if "--only-nodes" in args:
+        i = args.index("--only-nodes")
+        only = set(args[i + 1].split(","))
+        del args[i:i + 2]
     path, name, length = args[0], args[1], float(args[2])
     gltf, accessor, image = load(path)
 
     cubes = []
 
-    def visit(index, parent):
+    def visit(index, parent, kept=False):
         node = gltf["nodes"][index]
         if node.get("name") in skip:
             return
+        kept = kept or only is None or node.get("name") in only
         world = mat_mul(parent, node_matrix(node))
-        if "mesh" in node:
+        if "mesh" in node and kept:
             faces = faces_of(gltf, accessor, gltf["meshes"][node["mesh"]], world)
-            if len(faces) % 6:
+            if len(faces) <= 6:  # one box, possibly with faces left out (a flat pane has just one)
+                cubes.append(faces)
+            elif len(faces) % 6 == 0:  # several boxes merged into one mesh
+                cubes.extend(faces[i:i + 6] for i in range(0, len(faces), 6))
+            else:
                 sys.exit(f"Node {node.get('name')} has {len(faces)} faces, not whole boxes")
-            cubes.extend(faces[i:i + 6] for i in range(0, len(faces), 6))
         for child in node.get("children", []):
-            visit(child, world)
+            visit(child, world, kept)
 
     identity = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]
     for root in gltf["scenes"][gltf.get("scene", 0)]["nodes"]:
@@ -245,10 +295,27 @@ def main():
     for i, (texture, key) in enumerate(textures.items()):
         source = gltf["textures"][texture]["source"]
         open(f"{texture_dir}/{name}_{i}.png", "wb").write(image(source))
+    # Hand edits kept in tools/edits/<name>.json: element indices to remove, elements to add (in model pixels) and
+    # the extra textures they use, so a model can be converted again without losing them.
+    edits_path = os.path.join(os.path.dirname(__file__), "edits", f"{name}.json")
+    extra_textures = {}
+    if os.path.exists(edits_path):
+        edits = json.load(open(edits_path))
+        for change in edits.get("retexture", []):  # {"index", "face", "uv", "texture"}: repaint one face
+            elements[change["index"]]["faces"][change["face"]] = {"uv": change["uv"], "texture": change["texture"]}
+        removed = set(edits.get("remove", []))
+        # {"index", "from", "to", "faces"}: a piece of an original element with its texture kept in place;
+        # faces repaints some sides (a face set to null is left out).
+        cuts = [cut(elements[c["index"]], c["from"], c["to"], c.get("faces", {})) for c in edits.get("cuts", [])]
+        elements = [e for i, e in enumerate(elements) if i not in removed] + cuts + edits.get("add", [])
+        extra_textures = edits.get("textures", {})
+        print(f"  applied {edits_path}: removed {len(removed)}, added {len(edits.get('add', []))}")
+
     # The model fills about FIT pixels, so shrink it to fit an inventory slot (16 pixels) when shown as an icon.
     icon_scale = round(15 / FIT, 4)
     model = {"textures": {str(i): key for i, key in enumerate(textures.values())}, "elements": elements,
              "display": {"gui": {"rotation": [30, 225, 0], "scale": [icon_scale] * 3}}}
+    model["textures"].update(extra_textures)
     model["textures"]["particle"] = list(textures.values())[0]
     json.dump(model, open(model_path, "w"), indent=1)
     json.dump({"model": {"type": "minecraft:model", "model": f"vexel:item/vehicle/{name}"}}, open(f"assets/vexel/items/{name}.json", "w"), indent=2)
