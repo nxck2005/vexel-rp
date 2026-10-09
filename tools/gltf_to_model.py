@@ -310,6 +310,10 @@ def main():
         elements = [e for i, e in enumerate(elements) if i not in removed] + cuts + edits.get("add", [])
         extra_textures = edits.get("textures", {})
         print(f"  applied {edits_path}: removed {len(removed)}, added {len(edits.get('add', []))}")
+    # The game refuses to bake a model with a uv even slightly outside 0-16 (float error from the export).
+    for element in elements:
+        for face in element["faces"].values():
+            face["uv"] = [min(max(v, 0), 16) for v in face["uv"]]
 
     # The model fills about FIT pixels, so shrink it to fit an inventory slot (16 pixels) when shown as an icon.
     icon_scale = round(15 / FIT, 4)
