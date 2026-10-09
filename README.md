@@ -1,6 +1,6 @@
 # vexel-rp
 
-The Vexel Network server resource pack (Minecraft 26.2, pack format 88). Model credits are in [CREDITS.md](CREDITS.md).
+The Vexel Network server resource pack (Minecraft 1.21.11 to 26.2, pack formats 75 to 88). Model credits are in [CREDITS.md](CREDITS.md).
 
 ## Adding a vehicle model
 
