@@ -25,6 +25,8 @@ glass, and draws `interior.png`. Run it, then run the converter again.
 
 Seats are fitted so a player's eye is 0.87 blocks above their hips and about 1.2 blocks fit between cushion and
 roof. The type's `seat-height` in CityLifeCore's config is the hips height minus 0.13.
+Keep the eye clear of the seat back (sit on the cushion, in front of it). CityLifeCore tilts models around the
+driver's eye, so a tilting cockpit stays in place around the view.
 
 To check a model, `tools/preview.py <model.json> <out.png>` draws the outside and
 `tools/firstperson.py <model.json> <out.png> <eye x,y,z> --look x,y,z [--ids]` draws the driver's view
