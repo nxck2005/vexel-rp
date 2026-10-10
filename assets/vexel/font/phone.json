@@ -3,10 +3,19 @@
     {
       "type": "bitmap",
       "file": "vexel:font/phone/screen.png",
-      "ascent": 13,
-      "height": 222,
+      "ascent": 21,
+      "height": 238,
       "chars": [
         "\ue200"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "vexel:font/phone/screen_staff.png",
+      "ascent": 21,
+      "height": 238,
+      "chars": [
+        "\ue201"
       ]
     },
     {

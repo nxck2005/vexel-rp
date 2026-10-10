@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
-"""Draws the phone: the screen shown over CityLife's 6-row phone menu, and the phone item.
+"""Draws CityLife's tablet: the screen shown over the 6-row phone menu, and the tablet item.
 
     phone.py [--jar <minecraft client jar>]
 
-The screen is one glyph (U+E200) in the font vexel:phone, as big as the whole chest menu (176x222): a dark desk, a
-phone with app tiles and labels, and dark slots for the player's inventory. The plugin puts it in the menu title,
-shifted to the menu's top left with the font's space characters, and writes the clock and money over the status bar.
-App tiles sit under fixed menu slots, so APPS must match the slots in the plugin's phone.apps config.
+The screen is one glyph in the font vexel:phone: a tablet 8 pixels bigger than the chest menu (176x222) on every
+side, so the menu's own background is hidden. Its top holds the app tiles and labels; its bottom is a pocket panel
+behind the player's inventory, with a light header because the game always writes "Inventory" there in dark grey.
+U+E200 is the normal screen and U+E201 the staff one, which adds the staff tile. The plugin puts the glyph in the
+menu title, shifted with the font's space characters, and writes the clock and money over the status bar. App tiles
+sit under fixed menu slots, so APPS must match the slots in the plugin's phone.apps config.
 
-Writes assets/vexel/textures/font/phone/screen.png, assets/vexel/font/phone.json, and the phone item
-(assets/vexel/items/phone.json, its model and texture). Labels use Minecraft's font from the client jar (see
-badges.py). Needs Pillow. Run from the pack root.
+Writes assets/vexel/textures/font/phone/screen.png and screen_staff.png, assets/vexel/font/phone.json, and the
+tablet item (assets/vexel/items/phone.json, its model and texture). Labels use Minecraft's font from the client jar
+(see badges.py). Needs Pillow. Run from the pack root.
 """
 import json
 import os
@@ -21,25 +23,31 @@ from PIL import Image, ImageDraw
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import badges  # noqa: E402
 
-# Label, tile colour and menu slot (row * 9 + column). Rows 0 and 2 get labels; row 4 is the dock.
+# Label, tile colour and menu slot (row * 9 + column), in two labelled rows of four.
 APPS = [
-    ("Garage", "#3A7BD5", 2),
-    ("Cars", "#2F8F57", 4),
-    ("Eats", "#E2683C", 6),
-    ("Wallet", "#C9971C", 20),
-    ("Profile", "#6A44A6", 22),
-    ("Chat", "#4A4D57", 24),
-    ("Help", "#2A86C9", 40),
+    ("Garage", "#3A7BD5", 1),
+    ("Cars", "#2F8F57", 3),
+    ("Eats", "#E2683C", 5),
+    ("Wallet", "#C9971C", 7),
+    ("Profile", "#6A44A6", 19),
+    ("Chat", "#4A4D57", 21),
+    ("Help", "#2A86C9", 23),
 ]
-SCREEN = ""
+STAFF_APPS = [("Ranks", "#CC3B2E", 25)]
+SCREEN, STAFF_SCREEN = "\ue200", "\ue201"
+BORDER = 8  # how far the tablet reaches past the menu on each side
 # Space characters: U+E210 + n moves left by 2^n pixels, U+E220 + n moves right by 2^n (n = 0..7).
 SPACES = {**{chr(0xE210 + n): -(2 ** n) for n in range(8)}, **{chr(0xE220 + n): 2 ** n for n in range(8)}}
-DESK, BEZEL, EDGE = "#1D1F25", "#0D0E12", "#3A3C46"
+BEZEL, EDGE, SILVER = "#0D0E12", "#3A3C46", "#A9A7A9"
 WALL_TOP, WALL_BOTTOM = "#4B3373", "#191A21"
 
 
 def rgb(colour):
     return tuple(int(colour[i:i + 2], 16) for i in (1, 3, 5))
+
+
+def fade(a, b, f):
+    return tuple(round(p + (q - p) * f) for p, q in zip(rgb(a), rgb(b))) + (255,)
 
 
 def text(img, glyphs, x, y, string, colour):
@@ -62,57 +70,59 @@ def width(glyphs, string):
 
 
 def slot_xy(slot):
-    """Top left of a chest slot's item area."""
-    return 8 + slot % 9 * 18, 18 + slot // 9 * 18
+    """Top left of a chest slot's item area, in screen image pixels."""
+    return BORDER + 8 + slot % 9 * 18, BORDER + 18 + slot // 9 * 18
 
 
-def screen(glyphs):
-    img = Image.new("RGBA", (176, 222))
+def screen(glyphs, apps):
+    b = BORDER
+    img = Image.new("RGBA", (176 + 2 * b, 222 + 2 * b))
     d = ImageDraw.Draw(img)
-    # The right edge column must be opaque: the game measures a glyph's width up to its last opaque column.
-    d.rounded_rectangle((0, 0, 175, 221), 4, fill=rgb(DESK) + (255,), outline=rgb("#33353F") + (255,))
-    d.rectangle((175, 4, 175, 217), fill=rgb("#33353F") + (255,))
+    # Bezel. Its right edge must be opaque: the game measures a glyph's width up to its last opaque column.
+    d.rounded_rectangle((0, 0, img.width - 1, img.height - 1), 13, fill=rgb(BEZEL) + (255,), outline=rgb(EDGE) + (255,))
+    d.ellipse((b + 86, 2, b + 89, 5), fill=rgb("#23252E") + (255,))  # camera
 
-    # Phone body, then a wallpaper fading from brand purple into dark.
-    d.rounded_rectangle((28, 1, 148, 121), 9, fill=rgb(BEZEL) + (255,), outline=rgb(EDGE) + (255,))
-    wall = Image.new("RGBA", (113, 113))
+    # Screen: exactly the menu's area, a wallpaper fading from brand purple into dark.
+    wall = Image.new("RGBA", (176, 222))
     wd = ImageDraw.Draw(wall)
     for y in range(wall.height):
-        f = y / (wall.height - 1)
-        wd.line((0, y, wall.width - 1, y), fill=tuple(round(a + (b - a) * f) for a, b in zip(rgb(WALL_TOP), rgb(WALL_BOTTOM))) + (255,))
+        wd.line((0, y, wall.width - 1, y), fill=fade(WALL_TOP, WALL_BOTTOM, min(1, y / 170)))
     mask = Image.new("L", wall.size)
     ImageDraw.Draw(mask).rounded_rectangle((0, 0, wall.width - 1, wall.height - 1), 6, fill=255)
-    img.paste(wall, (32, 4), mask)
+    img.paste(wall, (b, b), mask)
 
-    # Dock behind the last row of apps.
-    dock = Image.new("RGBA", img.size)
-    ImageDraw.Draw(dock).rounded_rectangle((36, 86, 140, 109), 6, fill=(255, 255, 255, 22), outline=rgb("#5A4A7A") + (255,))
-    img.alpha_composite(dock)
-
-    for label, colour, slot in APPS:
+    for label, colour, slot in apps:
         x, y = slot_xy(slot)
         tile = rgb(colour)
         d.rounded_rectangle((x - 2, y - 2, x + 17, y + 17), 4, fill=tile + (255,))
         d.line((x, y - 2, x + 15, y - 2), fill=tuple(min(255, v + 50) for v in tile) + (255,))
-        if slot < 36:
-            text(img, glyphs, x + 8 - width(glyphs, label) // 2, y + 20, label, "#E6E6E6")
+        text(img, glyphs, x + 8 - width(glyphs, label) // 2, y + 20, label, "#E6E6E6")
 
-    # Dark slots for the player's inventory (three rows, then the hotbar).
+    # Pocket panel behind the player's inventory; the game writes "Inventory" at (8, 128) in dark grey, on the header.
+    panel = Image.new("RGBA", img.size)
+    pd = ImageDraw.Draw(panel)
+    pd.rounded_rectangle((b + 2, b + 124, b + 173, b + 219), 5, fill=(14, 15, 19, 235))
+    pd.rounded_rectangle((b + 2, b + 124, b + 173, b + 137), 5, fill=rgb(SILVER) + (255,))
+    pd.rectangle((b + 2, b + 131, b + 173, b + 137), fill=rgb(SILVER) + (255,))
+    img.alpha_composite(panel)
     for row in range(4):
         for column in range(9):
-            x, y = 8 + column * 18, 139 + row * 18 + (4 if row == 3 else 0)
-            d.rectangle((x - 1, y - 1, x + 16, y + 16), fill=rgb("#141519") + (255,))
-            d.rectangle((x, y, x + 15, y + 15), fill=rgb("#282931") + (255,))
+            x, y = b + 8 + column * 18, b + 139 + row * 18 + (4 if row == 3 else 0)
+            d.rectangle((x - 1, y - 1, x + 16, y + 16), fill=rgb("#0B0C0F") + (255,))
+            d.rectangle((x, y, x + 15, y + 15), fill=rgb("#23242B") + (255,))
     return img
 
 
-def phone_item():
+def tablet_item():
     img = Image.new("RGBA", (16, 16))
     d = ImageDraw.Draw(img)
-    d.rounded_rectangle((4, 1, 11, 14), 2, fill=rgb("#16171C") + (255,), outline=rgb(EDGE) + (255,))
-    d.rectangle((5, 3, 10, 11), fill=rgb("#664696") + (255,))
-    d.rectangle((5, 3, 10, 5), fill=rgb("#8B6BC4") + (255,))
-    d.line((7, 13, 8, 13), fill=rgb("#A9A7A9") + (255,))
+    d.rounded_rectangle((1, 2, 14, 14), 2, fill=rgb("#16171C") + (255,), outline=rgb(EDGE) + (255,))
+    for y in range(3, 12):  # screen: purple fading darker
+        d.line((3, y, 12, y), fill=fade("#7B5BAA", "#3A2A5A", (y - 3) / 8))
+    for i, colour in enumerate(("#3A7BD5", "#2F8F57", "#E2683C", "#C9971C")):  # app tiles
+        x, y = 4 + i % 2 * 4, 4 + i // 2 * 4
+        d.rectangle((x, y, x + 1, y + 1), fill=rgb(colour) + (255,))
+    d.point((8, 13), fill=rgb(SILVER) + (255,))  # home button
     return img
 
 
@@ -122,19 +132,23 @@ def main():
     for folder in ("assets/vexel/textures/font/phone", "assets/vexel/font", "assets/vexel/textures/item",
                    "assets/vexel/models/item", "assets/vexel/items"):
         os.makedirs(folder, exist_ok=True)
-    screen(glyphs).save("assets/vexel/textures/font/phone/screen.png")
-    # Ascent 13 puts the glyph's top at the menu's top edge (the title is drawn 6 pixels down, baseline 7 below that).
+    screen(glyphs, APPS).save("assets/vexel/textures/font/phone/screen.png")
+    screen(glyphs, APPS + STAFF_APPS).save("assets/vexel/textures/font/phone/screen_staff.png")
+    # The title's baseline is 13 pixels below the menu's top, so ascent 13 + BORDER puts the glyph's top BORDER above it.
+    height = 222 + 2 * BORDER
     font = {"providers": [
-        {"type": "bitmap", "file": "vexel:font/phone/screen.png", "ascent": 13, "height": 222, "chars": [SCREEN]},
+        {"type": "bitmap", "file": "vexel:font/phone/screen.png", "ascent": 13 + BORDER, "height": height, "chars": [SCREEN]},
+        {"type": "bitmap", "file": "vexel:font/phone/screen_staff.png", "ascent": 13 + BORDER, "height": height,
+         "chars": [STAFF_SCREEN]},
         {"type": "space", "advances": SPACES},
     ]}
     json.dump(font, open("assets/vexel/font/phone.json", "w"), indent=2)
-    phone_item().save("assets/vexel/textures/item/phone.png")
+    tablet_item().save("assets/vexel/textures/item/phone.png")
     json.dump({"parent": "minecraft:item/generated", "textures": {"layer0": "vexel:item/phone"}},
               open("assets/vexel/models/item/phone.json", "w"), indent=2)
     json.dump({"model": {"type": "minecraft:model", "model": "vexel:item/phone"}},
               open("assets/vexel/items/phone.json", "w"), indent=2)
-    print("phone screen and item written")
+    print("tablet screens and item written")
 
 
 if __name__ == "__main__":
