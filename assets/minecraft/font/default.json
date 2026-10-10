@@ -1,0 +1,94 @@
+{
+  "providers": [
+    {
+      "type": "bitmap",
+      "file": "vexel:font/badge/citizen.png",
+      "ascent": 8,
+      "height": 9,
+      "chars": [
+        "\ue100"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "vexel:font/badge/vip.png",
+      "ascent": 8,
+      "height": 9,
+      "chars": [
+        "\ue101"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "vexel:font/badge/mvp.png",
+      "ascent": 8,
+      "height": 9,
+      "chars": [
+        "\ue102"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "vexel:font/badge/vexel.png",
+      "ascent": 8,
+      "height": 9,
+      "chars": [
+        "\ue103"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "vexel:font/badge/vexelplus.png",
+      "ascent": 8,
+      "height": 9,
+      "chars": [
+        "\ue104"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "vexel:font/badge/builder.png",
+      "ascent": 8,
+      "height": 9,
+      "chars": [
+        "\ue110"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "vexel:font/badge/helper.png",
+      "ascent": 8,
+      "height": 9,
+      "chars": [
+        "\ue111"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "vexel:font/badge/mod.png",
+      "ascent": 8,
+      "height": 9,
+      "chars": [
+        "\ue112"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "vexel:font/badge/admin.png",
+      "ascent": 8,
+      "height": 9,
+      "chars": [
+        "\ue113"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "vexel:font/badge/owner.png",
+      "ascent": 8,
+      "height": 9,
+      "chars": [
+        "\ue114"
+      ]
+    }
+  ]
+}

@@ -35,6 +35,14 @@ To check a model, `tools/preview.py <model.json> <out.png>` draws the outside an
 Re-running the converter overwrites the model's textures. `truck_0.png` has the original company logos painted
 over by hand, so after converting the truck again, restore it with `git checkout -- assets/vexel/textures/item/vehicle/truck_0.png`.
 
+## Rank badges
+
+`python3 tools/badges.py --style B` draws the rank badges (chat, tab list) and adds them to the default font, as
+private-use characters U+E100 and up. LuckPerms group prefixes hold those characters. Ranks, colours and icons are
+one list at the top of the script. `--style E` is the alternative look (plain text, soft shadow, double resolution);
+each badge keeps its character, so switching is a rerun and a new release, with no LuckPerms changes. Never reuse a
+character for a different rank. The text uses Minecraft's font, read from the client jar on this machine.
+
 ## Releasing
 
     zip -r -X vexel-rp.zip pack.mcmeta assets
