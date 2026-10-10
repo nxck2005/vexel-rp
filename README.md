@@ -43,6 +43,13 @@ one list at the top of the script. `--style E` is the alternative look (plain te
 each badge keeps its character, so switching is a rerun and a new release, with no LuckPerms changes. Never reuse a
 character for a different rank. The text uses Minecraft's font, read from the client jar on this machine.
 
+## Phone
+
+`python3 tools/phone.py` draws CityLife's phone: the screen (one glyph, U+E200 in the font `vexel:phone`, covering
+the whole 6-row phone menu) and the phone item (`vexel:phone`). The font also holds space characters that CityLife
+uses to place the screen and write the clock and money on its status bar. App labels, tile colours and slots are one
+list at the top of the script and must match the slots in CityLife's `phone.apps` config.
+
 ## Releasing
 
     zip -r -X vexel-rp.zip pack.mcmeta assets
