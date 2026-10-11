@@ -20,7 +20,7 @@ import sys
 from PIL import Image
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from gltf_to_model import FIT, apply, euler_xyz, load, mat_mul, node_matrix  # noqa: E402
+from gltf_to_model import DIRECTIONS, FIT, apply, euler_xyz, face_uv, load, mat_mul, node_matrix, transpose  # noqa: E402
 
 
 def sub(a, b):
@@ -213,30 +213,55 @@ def main():
     all_points = [p for t in tris for p in t[0]]
     lo = [min(p[k] for p in all_points) for k in range(3)]
     hi = [max(p[k] for p in all_points) for k in range(3)]
-    scale = FIT / max(hi[k] - lo[k] for k in range(3))  # model pixels per source unit
     middle = [(lo[k] + hi[k]) / 2 for k in range(3)]
+    axes = [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]]
+
+    # Each part becomes a flat element showing one face. Of the 24 ways to lay a box face on the part, the one that
+    # needs the smallest turn is used (the game only accepts moderate element rotations).
+    parts = []  # (centre, rotation, local corners, uvs, face direction)
+    for ((u, n, v), offset, low_u, low_v, size_u, size_v, patch), (x, y) in zip(patches, places):
+        corners, uvs = [], []
+        for au, av in ((0, 0), (1, 0), (1, 1), (0, 1)):
+            corners.append([(low_u + au * size_u) * u[k] + offset * n[k] + (low_v + av * size_v) * v[k] for k in range(3)])
+            uvs.append(((x + au * patch.width) / size, (y + av * patch.height) / size))
+        centre = [sum(c[k] for c in corners) / 4 for k in range(3)]
+        world = transpose([n, u, cross(n, u)])
+        best = None
+        for face in axes:
+            for along in (a for a in axes if dot(a, face) == 0):
+                r = mat_mul(world, [face, along, cross(face, along)])
+                if best is None or r[0][0] + r[1][1] + r[2][2] > best[1][0][0] + best[1][1][1] + best[1][2][2]:
+                    best = (face, r)
+        face, r = best
+        local = [apply(transpose(r), sub(c, centre)) for c in corners]
+        parts.append((centre, r, local, uvs, DIRECTIONS[tuple(face)]))
+
+    # Rotated elements are checked unrotated, so shrink the model until every element is inside -16..32.
+    scale = FIT / max(hi[k] - lo[k] for k in range(3))  # model pixels per source unit
+    while True:
+        elements = []
+        for centre, r, local, uvs, direction in parts:
+            origin = [8 + (centre[k] - middle[k]) * scale for k in range(3)]
+            low = [min(c[k] for c in local) for k in range(3)]
+            high = [max(c[k] for c in local) for k in range(3)]
+            uv, rotation = face_uv(direction, local, uvs, low, high, scale)
+            element = {"from": [round(origin[k] + low[k] * scale, 4) for k in range(3)],
+                       "to": [round(origin[k] + high[k] * scale, 4) for k in range(3)],
+                       "faces": {direction: {"uv": [min(max(c, 0), 16) for c in uv], "texture": "#0"}}}
+            if rotation:
+                element["faces"][direction]["rotation"] = rotation
+            turn = angles(r)
+            if any(abs(a) > 1e-3 for a in turn):
+                element["rotation"] = {"origin": [round(c, 4) for c in origin], "x": turn[0], "y": turn[1], "z": turn[2]}
+            elements.append(element)
+        if all(-16 <= c <= 32 for e in elements for c in e["from"] + e["to"]):
+            break
+        scale *= 0.98
 
     def to_model(point):
         return [8 + (point[k] - middle[k]) * scale for k in range(3)]
 
     texture_key = f"vexel:item/vehicle/{name}_0"
-    elements = []
-    for ((u, n, v), offset, low_u, low_v, size_u, size_v, patch), (x, y) in zip(patches, places):
-        half_u, half_v = size_u / 2, size_v / 2
-        # The element is flat, with only its top face, in the part's own axes: x along u, y along the normal, z along v.
-        centre = [(low_u + half_u) * u[k] + offset * n[k] + (low_v + half_v) * v[k] for k in range(3)]
-        origin = to_model(centre)
-        element = {
-            "from": [round(origin[0] - half_u * scale, 4), round(origin[1], 4), round(origin[2] - half_v * scale, 4)],
-            "to": [round(origin[0] + half_u * scale, 4), round(origin[1], 4), round(origin[2] + half_v * scale, 4)],
-            "faces": {"up": {"uv": [round(c, 4) for c in (x / size * 16, y / size * 16, (x + patch.width) / size * 16,
-                                                           (y + patch.height) / size * 16)], "texture": "#0"}},
-        }
-        turn = angles([[u[r], n[r], v[r]] for r in range(3)])
-        if any(abs(a) > 1e-3 for a in turn):
-            element["rotation"] = {"origin": [round(c, 4) for c in origin], "x": turn[0], "y": turn[1], "z": turn[2]}
-        elements.append(element)
-
     model_path = f"assets/vexel/models/item/vehicle/{name}.json"
     texture_dir = "assets/vexel/textures/item/vehicle"
     os.makedirs(os.path.dirname(model_path), exist_ok=True)
