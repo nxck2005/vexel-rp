@@ -16,6 +16,13 @@ helicopter's rotor is its own model, `helicopter_rotor`, so it can spin).
 Source downloads live in `~/projects/vexel-dev/models-incoming/` (not committed). Vehicle lengths used so far:
 sedan_a 6.5, sports_car 7.52, mini 6.67, golf_cart 5.09, truck 15, helicopter 9.44.
 
+Models that aren't made of whole boxes (faces merged into many-sided shapes, round or slanted parts) are converted with:
+
+    python3 tools/bake_model.py <model.gltf> <name> <length-in-blocks>
+
+It turns each flat part into a flat element with its own piece of one new texture, transparent outside the part's
+shape. It prints the same `scale` and `offset`. The tram was made this way (length 10, to fit the 5 block wide track).
+
 ## Interiors
 
 `tools/edits/<name>.json` holds hand changes the converter applies after converting: faces to retexture,

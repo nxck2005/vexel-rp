@@ -23,7 +23,7 @@ from PIL import Image, ImageDraw
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import badges  # noqa: E402
 
-# Label, tile colour and menu slot (row * 9 + column), in two labelled rows of four.
+# Label, tile colour and menu slot (row * 9 + column), in labelled rows of four.
 APPS = [
     ("Garage", "#3A7BD5", 1),
     ("Cars", "#2F8F57", 3),
@@ -32,6 +32,7 @@ APPS = [
     ("Profile", "#6A44A6", 19),
     ("Chat", "#4A4D57", 21),
     ("Help", "#2A86C9", 23),
+    ("Transit", "#1F9E9A", 37),
 ]
 STAFF_APPS = [("Ranks", "#CC3B2E", 25)]
 SCREEN, STAFF_SCREEN = "\ue200", "\ue201"
