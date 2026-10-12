@@ -33,6 +33,7 @@ APPS = [
     ("Chat", "#4A4D57", 21),
     ("Help", "#2A86C9", 23),
     ("Transit", "#1F9E9A", 37),
+    ("Jobs", "#8A5A2B", 39),
 ]
 STAFF_APPS = [("Ranks", "#CC3B2E", 25)]
 SCREEN, STAFF_SCREEN = "\ue200", "\ue201"
