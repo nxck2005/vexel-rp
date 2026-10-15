@@ -13,3 +13,7 @@ and the tram's flat parts were baked into new flat elements.
 - Golf cart (`golf_cart`): "Golf Cart" by NZFawkes, https://sketchfab.com/3d-models/golf-cart-db115793a8274dc18b2b277bf6c97703
 - Helicopter (`helicopter`, `helicopter_rotor`): "helicopter - minercaft" by radher, https://sketchfab.com/3d-models/helicopter-minercaft-421cb6e21ac94abd826c5b28a5b39ee9
 - Tram (`tram`): "Soviet Tram" by Sosiska555, https://sketchfab.com/3d-models/soviet-tram-4ae26ce86170406e834f7860975c869b
+
+The speedboat (`speedboat`) is a placeholder built box by box in `tools/speedboat.py`, shaped after
+"220_ Bow_ Raider_power_boat_SS" by sherif shawky (Sketchfab Standard license),
+https://sketchfab.com/3d-models/220--bow--raider-power-boat-ss-8ef7ae0634194eb289fecb7b21966a40

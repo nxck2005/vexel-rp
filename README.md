@@ -23,6 +23,9 @@ Models that aren't made of whole boxes (faces merged into many-sided shapes, rou
 It turns each flat part into a flat element with its own piece of one new texture, transparent outside the part's
 shape. It prints the same `scale` and `offset`. The tram was made this way (length 10, to fit the 5 block wide track).
 
+The speedboat is a placeholder drawn box by box in code: `python3 tools/speedboat.py` writes it and prints its
+`scale`, `offset`, `size` and `seat-height`.
+
 ## Interiors
 
 `tools/edits/<name>.json` holds hand changes the converter applies after converting: faces to retexture,
