@@ -1,0 +1,45 @@
+{
+ "textures": {
+  "0": "vexel:item/vehicle/mini_0",
+  "particle": "vexel:item/vehicle/mini_0"
+ },
+ "elements": [
+  {
+   "from": [
+    -0.1894,
+    6.2945,
+    -6.8679
+   ],
+   "to": [
+    0.6357,
+    10.0076,
+    -1.092
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      1.75,
+      13.625,
+      1.875,
+      14.1875
+     ],
+     "texture": "#0"
+    }
+   }
+  }
+ ],
+ "display": {
+  "gui": {
+   "rotation": [
+    30,
+    225,
+    0
+   ],
+   "scale": [
+    0.3409,
+    0.3409,
+    0.3409
+   ]
+  }
+ }
+}

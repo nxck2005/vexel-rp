@@ -5,7 +5,7 @@
 
 Writes assets/vexel/models/item/vehicle/<name>.json, its textures and assets/vexel/items/<name>.json, then prints
 the model-scale and model-offset that make the model <length-in-blocks> long, sitting on y=0 and centred on x/z.
-Run from the pack root. Uses only the standard library.
+See-through faces are then moved to a <name>_glass model (tools/glass.py). Run from the pack root. Needs Pillow.
 """
 import base64
 import json
@@ -13,6 +13,8 @@ import math
 import os
 import struct
 import sys
+
+import glass  # tools/glass.py
 
 # Vertex order of each face, from net.minecraft.client.renderer.FaceInfo (26.2). 0 = min, 1 = max per axis.
 FACE_VERTICES = {
@@ -323,6 +325,7 @@ def main():
     model["textures"]["particle"] = list(textures.values())[0]
     json.dump(model, open(model_path, "w"), indent=1)
     json.dump({"model": {"type": "minecraft:model", "model": f"vexel:item/vehicle/{name}"}}, open(f"assets/vexel/items/{name}.json", "w"), indent=2)
+    glass.split(name)
 
     # An item display draws model pixel p at (p / 16 - 0.5) blocks. Scale so the longest horizontal side is
     # <length> blocks, then shift so the model sits on y=0, centred on x and z.

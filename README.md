@@ -34,6 +34,11 @@ elements to remove, `cuts` (pieces of an element, used to hollow out solid cabin
 These files are made by `python3 tools/interior.py <name>`, which builds each vehicle's seats, wheel, dash and
 glass, and draws `interior.png`. Run it, then run the converter again.
 
+The converter then moves see-through faces (the tinted glass) into their own model, `<name>_glass`, with
+`tools/glass.py`. One see-through face makes the game draw a whole model after the solid ones, and shader packs (Iris)
+then leave out its solid faces, so the car vanishes. Set the glass model as `glass` in the vehicle type's `model`
+section. Run `python3 tools/glass.py <name>` by hand after editing a model any other way.
+
 Seats are fitted so a player's eye is 0.87 blocks above their hips and about 1.2 blocks fit between cushion and
 roof. The type's `seat-height` in CityLifeCore's config is the hips height minus 0.13.
 Keep the eye clear of the seat back (sit on the cushion, in front of it). CityLifeCore tilts models around the
