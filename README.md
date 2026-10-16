@@ -24,7 +24,8 @@ It turns each flat part into a flat element with its own piece of one new textur
 shape. It prints the same `scale` and `offset`. The tram was made this way (length 10, to fit the 5 block wide track).
 
 The speedboat is a placeholder drawn box by box in code: `python3 tools/speedboat.py` writes it and prints its
-`scale`, `offset`, `size` and `seat-height`.
+`scale`, `offset`, `size` and `seat-height`. The boat wake's pieces (lines of the V with foam, every 5 degrees and
+4 fade stages) are drawn by `python3 tools/wake.py`.
 
 ## Interiors
 
