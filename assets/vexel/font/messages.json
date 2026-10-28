@@ -1,0 +1,22 @@
+{
+  "providers": [
+    {
+      "type": "bitmap",
+      "file": "vexel:font/messages/conversation.png",
+      "ascent": 21,
+      "height": 238,
+      "chars": [
+        "\ue202"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "vexel:font/messages/inbox.png",
+      "ascent": 21,
+      "height": 238,
+      "chars": [
+        "\ue203"
+      ]
+    }
+  ]
+}

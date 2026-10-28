@@ -32,11 +32,12 @@ APPS = [
     ("Profile", "#6A44A6", 19),
     ("Chat", "#4A4D57", 21),
     ("Help", "#2A86C9", 23),
+    ("Phone", "#2FBF71", 25),
     ("Transit", "#1F9E9A", 37),
     ("Jobs", "#8A5A2B", 39),
     ("School", "#3E5BA9", 41),
 ]
-STAFF_APPS = [("Ranks", "#CC3B2E", 25)]
+STAFF_APPS = [("Ranks", "#CC3B2E", 43)]
 SCREEN, STAFF_SCREEN = "\ue200", "\ue201"
 BORDER = 8  # how far the tablet reaches past the menu on each side
 # Space characters: U+E210 + n moves left by 2^n pixels, U+E220 + n moves right by 2^n (n = 0..7).
@@ -77,13 +78,37 @@ def slot_xy(slot):
     return BORDER + 8 + slot % 9 * 18, BORDER + 18 + slot // 9 * 18
 
 
-def screen(glyphs, apps):
+def bezel():
+    """The empty tablet. Its right edge must be opaque: the game measures a glyph's width up to its last opaque column."""
     b = BORDER
     img = Image.new("RGBA", (176 + 2 * b, 222 + 2 * b))
     d = ImageDraw.Draw(img)
-    # Bezel. Its right edge must be opaque: the game measures a glyph's width up to its last opaque column.
     d.rounded_rectangle((0, 0, img.width - 1, img.height - 1), 13, fill=rgb(BEZEL) + (255,), outline=rgb(EDGE) + (255,))
     d.ellipse((b + 86, 2, b + 89, 5), fill=rgb("#23252E") + (255,))  # camera
+    return img
+
+
+def pocket(img):
+    """Panel behind the player's inventory; the game writes "Inventory" at (8, 128) in dark grey, on the header."""
+    b = BORDER
+    panel = Image.new("RGBA", img.size)
+    pd = ImageDraw.Draw(panel)
+    pd.rounded_rectangle((b + 2, b + 124, b + 173, b + 219), 5, fill=(14, 15, 19, 235))
+    pd.rounded_rectangle((b + 2, b + 124, b + 173, b + 137), 5, fill=rgb(SILVER) + (255,))
+    pd.rectangle((b + 2, b + 131, b + 173, b + 137), fill=rgb(SILVER) + (255,))
+    img.alpha_composite(panel)
+    d = ImageDraw.Draw(img)
+    for row in range(4):
+        for column in range(9):
+            x, y = b + 8 + column * 18, b + 139 + row * 18 + (4 if row == 3 else 0)
+            d.rectangle((x - 1, y - 1, x + 16, y + 16), fill=rgb("#0B0C0F") + (255,))
+            d.rectangle((x, y, x + 15, y + 15), fill=rgb("#23242B") + (255,))
+
+
+def screen(glyphs, apps):
+    b = BORDER
+    img = bezel()
+    d = ImageDraw.Draw(img)
 
     # Screen: exactly the menu's area, a wallpaper fading from brand purple into dark.
     wall = Image.new("RGBA", (176, 222))
@@ -101,18 +126,7 @@ def screen(glyphs, apps):
         d.line((x, y - 2, x + 15, y - 2), fill=tuple(min(255, v + 50) for v in tile) + (255,))
         text(img, glyphs, x + 8 - width(glyphs, label) // 2, y + 20, label, "#E6E6E6")
 
-    # Pocket panel behind the player's inventory; the game writes "Inventory" at (8, 128) in dark grey, on the header.
-    panel = Image.new("RGBA", img.size)
-    pd = ImageDraw.Draw(panel)
-    pd.rounded_rectangle((b + 2, b + 124, b + 173, b + 219), 5, fill=(14, 15, 19, 235))
-    pd.rounded_rectangle((b + 2, b + 124, b + 173, b + 137), 5, fill=rgb(SILVER) + (255,))
-    pd.rectangle((b + 2, b + 131, b + 173, b + 137), fill=rgb(SILVER) + (255,))
-    img.alpha_composite(panel)
-    for row in range(4):
-        for column in range(9):
-            x, y = b + 8 + column * 18, b + 139 + row * 18 + (4 if row == 3 else 0)
-            d.rectangle((x - 1, y - 1, x + 16, y + 16), fill=rgb("#0B0C0F") + (255,))
-            d.rectangle((x, y, x + 15, y + 15), fill=rgb("#23242B") + (255,))
+    pocket(img)
     return img
 
 
