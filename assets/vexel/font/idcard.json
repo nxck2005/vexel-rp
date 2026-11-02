@@ -1,0 +1,40 @@
+{
+  "providers": [
+    {
+      "type": "bitmap",
+      "file": "vexel:font/idcard/light_own.png",
+      "ascent": 21,
+      "height": 238,
+      "chars": [
+        "\ue200"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "vexel:font/idcard/light_other.png",
+      "ascent": 21,
+      "height": 238,
+      "chars": [
+        "\ue201"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "vexel:font/idcard/dark_own.png",
+      "ascent": 21,
+      "height": 238,
+      "chars": [
+        "\ue202"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "vexel:font/idcard/dark_other.png",
+      "ascent": 21,
+      "height": 238,
+      "chars": [
+        "\ue203"
+      ]
+    }
+  ]
+}
