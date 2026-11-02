@@ -7,7 +7,7 @@ Like the Messages screens (messages.py), each screen is one glyph in a chest men
 U+E200 your own card and U+E201 someone else's, light; U+E202 and U+E203 the same, dark. The screens hold everything
 that never changes (the card, labels, the licence row, the buttons); the plugin writes the name and values after them
 with messages.py's per-height fonts, and the rank badge with vexel:idcard/badge (badges.py's badges moved down to
-BADGE_Y). The photo is the player's own head, an item in slot 10 drawn 4 times bigger and facing forward by the item
+BADGE_Y, under the name). The photo is the player's own head, an item in slot 10 drawn 4 times bigger and facing forward by the item
 model vexel:id_photo. The layout must match CityLifeCore's idcard feature. Needs Pillow. Run from the pack root.
 """
 import json
@@ -25,10 +25,10 @@ THEMES = {
     "light": dict(card="#EEEAF3", ink="#1D1F25", muted="#76717F", line="#D6D0DE", photo="#B9C7D8", pill="#C9C3D1"),
     "dark": dict(card="#24252D", ink="#FFFFFF", muted="#A9A7A9", line="#34363F", photo="#3A3C46", pill="#3A3C46"),
 }
-CARD = (6, 6, 169, 104)  # menu pixels; the screen image is BORDER more on each side
-PHOTO = (17, 27, 50, 60)  # around slot 10, whose 32x32 head is centred on the slot
-LABELS_X, FIELDS_Y, FIELD_STEP = 56, 37, 10
-BADGE_Y = 64
+CARD = (6, 6, 169, 107)  # menu pixels; the screen image is BORDER more on each side
+PHOTO = (15, 25, 52, 62)  # around slot 10's head: 32x32, 36x36 with the hat layer, centred on the slot
+LABELS_X, FIELDS_Y, FIELD_STEP = 56, 45, 9
+BADGE_Y = 34  # under the name; badges are up to 57 wide, too wide for under the photo
 # Slot row 5: (first column, last column, label, background, text colour)
 OWN_BUTTONS = [(0, 3, "Show nearby", "#664696", "#FFFFFF"), (4, 6, None, "#3A3A3C", "#FFFFFF"), (7, 8, "Close", "#3A3A3C", "#A9A7A9")]
 OTHER_BUTTONS = [(0, 2, "Text", "#0A84FF", "#FFFFFF"), (3, 6, "Save contact", "#3A3A3C", "#FFFFFF"), (7, 8, "Close", "#3A3A3C", "#A9A7A9")]
@@ -61,8 +61,8 @@ def screen(glyphs, theme, own):
     img = phone.bezel()
     wall = Image.new("RGBA", (176, 222))
     wd = ImageDraw.Draw(wall)
-    for y in range(124):
-        wd.line((0, y, 175, y), fill=phone.fade("#2A2140", "#121318", y / 123))
+    for y in range(222):  # all of it: see-through pixels would show the chest menu's own background
+        wd.line((0, y, 175, y), fill=phone.fade("#2A2140", "#121318", min(1, y / 123)))
     mask = Image.new("L", wall.size)
     ImageDraw.Draw(mask).rounded_rectangle((0, 0, 175, 221), 6, fill=255)
     img.paste(wall, (b, b), mask)
@@ -90,15 +90,14 @@ def screen(glyphs, theme, own):
     d.rectangle((px0, py0, px1, py1), fill=rgb(t["line"]) + (255,))
     d.rectangle((px0 + 1, py0 + 1, px1 - 1, py1 - 1), fill=rgb(t["photo"]) + (255,))
 
-    d.line((LABELS_X + b, 34 + b, x1 - 5, 34 + b), fill=rgb(t["line"]) + (255,))
     for i, label in enumerate(("Job", "School", "Phone", "Since", "Played")):
         text(img, glyphs, LABELS_X + b, FIELDS_Y + i * FIELD_STEP + b, label, t["muted"])
 
-    d.line((x0 + 5, 86 + b, x1 - 5, 86 + b), fill=rgb(t["line"]) + (255,))
+    d.line((x0 + 5, 90 + b, x1 - 5, 90 + b), fill=rgb(t["line"]) + (255,))
     x = x0 + 5
     for name in ("Car", "Boat", "Plane"):
-        x += pill(img, glyphs, x, 89 + b, name, t["pill"], t["muted"]) + 2
-    text(img, glyphs, x + 2, 91 + b, "Coming soon!", t["muted"])
+        x += pill(img, glyphs, x, 93 + b, name, t["pill"], t["muted"]) + 2
+    text(img, glyphs, x + 2, 95 + b, "Coming soon!", t["muted"])
 
     other_theme = "Light" if theme == "dark" else "Dark"
     for first, last, label, bg, fg in OWN_BUTTONS if own else OTHER_BUTTONS:
@@ -127,12 +126,13 @@ if __name__ == "__main__":
     json.dump({"providers": [{"type": "bitmap", "file": f"vexel:font/badge/{badge_id}.png", "ascent": 13 - BADGE_Y,
                               "height": badges.HEIGHT, "chars": [char]} for badge_id, _, char, *_ in badges.BADGES]},
               open("assets/vexel/font/idcard/badge.json", "w"), indent=2)
-    # The head faces forward (gui rotation 0, like an item frame's), 4 times bigger: 32x32 pixels. It's 8 tall from
+    # The head faces forward (gui rotation 0 shows its face), 4 times bigger: 32x32 pixels. It's 8 tall from
     # the bottom of the block, so it moves up by its half height times the scale to stay centred on the slot.
     json.dump({"parent": "minecraft:item/template_skull", "gui_light": "front",
                "display": {"gui": {"rotation": [0, 0, 0], "translation": [0, 16, 0], "scale": [4, 4, 1]}}},
               open("assets/vexel/models/item/id_photo.json", "w"), indent=2)
-    json.dump({"model": {"type": "minecraft:special", "base": "vexel:item/id_photo", "model": {"type": "minecraft:player_head"},
+    # oversized_in_gui: since 1.21.6 the game cuts item drawings to their slot unless this is set.
+    json.dump({"oversized_in_gui": True, "model": {"type": "minecraft:special", "base": "vexel:item/id_photo", "model": {"type": "minecraft:player_head"},
                          "transformation": {"left_rotation": [1.0, 0.0, 0.0, 0.0], "right_rotation": [0.0, 0.0, 0.0, 1.0],
                                             "scale": [1.0, 1.0, 1.0], "translation": [0.5, 0.0, 0.5]}}},
               open("assets/vexel/items/id_photo.json", "w"), indent=2)

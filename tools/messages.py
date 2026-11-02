@@ -43,7 +43,7 @@ def base(header):
     img = phone.bezel()
     scr = Image.new("RGBA", (176, 222))
     d = ImageDraw.Draw(scr)
-    d.rectangle((0, 0, 175, 123), fill=rgb(DARK) + (255,))
+    d.rectangle((0, 0, 175, 221), fill=rgb(DARK) + (255,))  # all of it, or the chest menu shows through
     if header:
         d.rectangle((0, 0, 175, header), fill=rgb(HEADER) + (255,))
         d.line((0, header + 1, 175, header + 1), fill=rgb(LINE) + (255,))
