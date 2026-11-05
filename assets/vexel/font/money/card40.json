@@ -1,0 +1,31 @@
+{
+  "providers": [
+    {
+      "type": "bitmap",
+      "file": "vexel:font/money/card_yours.png",
+      "ascent": -27,
+      "height": 30,
+      "chars": [
+        "\ue210"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "vexel:font/money/card_theirs.png",
+      "ascent": -27,
+      "height": 30,
+      "chars": [
+        "\ue211"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "vexel:font/money/card_request.png",
+      "ascent": -27,
+      "height": 30,
+      "chars": [
+        "\ue212"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "providers": [
+    {
+      "type": "bitmap",
+      "file": "vexel:font/money/home.png",
+      "ascent": 21,
+      "height": 238,
+      "chars": [
+        "\ue200"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "vexel:font/money/thread.png",
+      "ascent": 21,
+      "height": 238,
+      "chars": [
+        "\ue201"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "vexel:font/money/list.png",
+      "ascent": 21,
+      "height": 238,
+      "chars": [
+        "\ue202"
+      ]
+    }
+  ]
+}

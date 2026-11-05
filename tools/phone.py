@@ -28,7 +28,7 @@ APPS = [
     ("Garage", "#3A7BD5", 1),
     ("Cars", "#2F8F57", 3),
     ("Eats", "#E2683C", 5),
-    ("Wallet", "#C9971C", 7),
+    ("Money", "#C9971C", 7),
     ("Profile", "#6A44A6", 19),
     ("Chat", "#4A4D57", 21),
     ("Help", "#2A86C9", 23),
