@@ -49,8 +49,8 @@ def bar_button(img, glyphs, first, last, label, bg):
 
 
 def home(glyphs):
-    """Rows 0-1: the savings card (click: history). Row 2: four people (slots 19, 21, 23, 25). Row 4: recent payments
-    (click: history). Row 5: Pay number (45-48), Nearby (49-50), Request (51-53)."""
+    """Rows 0-1: the savings card (click: history). Rows 2-3: four people (slots 19, 21, 23, 25, names below). Row 4:
+    the latest payment (click: history). Row 5: Pay number (45-48), Nearby (49-50), Request (51-53)."""
     b = BORDER
     img = messages.base(0)
     x0, y0, x1, y1 = b + 6, b + 4, b + 169, b + 44
@@ -65,8 +65,9 @@ def home(glyphs):
     # On slot row 1 (y 36-51), so it is over slots that open History; the card's top line has no slots under it.
     flat_text(img, glyphs, b + 164 - width(glyphs, "History >"), b + 35, "History >", LIGHT)
     flat_text(img, glyphs, b + 8, b + 46, "People", MUTED)
-    flat_text(img, glyphs, b + 8, b + 83, "Recent", MUTED)
-    flat_text(img, glyphs, b + 168 - width(glyphs, "See all >"), b + 83, "See all >", LINK)
+    # Slot row 4 (y 90-105) opens History, so "See all >" must be on it; the one recent payment goes below.
+    flat_text(img, glyphs, b + 8, b + 90, "Recent", MUTED)
+    flat_text(img, glyphs, b + 168 - width(glyphs, "See all >"), b + 90, "See all >", LINK)
     bar_button(img, glyphs, 0, 3, "Pay number", PURPLE)
     bar_button(img, glyphs, 4, 5, "Nearby", GREY_BUTTON)
     bar_button(img, glyphs, 6, 8, "Request", GREY_BUTTON)
