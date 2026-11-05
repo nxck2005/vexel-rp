@@ -62,7 +62,8 @@ def home(glyphs):
     ImageDraw.Draw(mask).rounded_rectangle((x0, y0, x1, y1), 6, fill=255)
     img.paste(card, (0, 0), mask)
     flat_text(img, glyphs, b + 12, b + 7, "Savings", LIGHT)
-    flat_text(img, glyphs, b + 164 - width(glyphs, "History >"), b + 7, "History >", LIGHT)
+    # On slot row 1 (y 36-51), so it is over slots that open History; the card's top line has no slots under it.
+    flat_text(img, glyphs, b + 164 - width(glyphs, "History >"), b + 35, "History >", LIGHT)
     flat_text(img, glyphs, b + 8, b + 46, "People", MUTED)
     flat_text(img, glyphs, b + 8, b + 83, "Recent", MUTED)
     flat_text(img, glyphs, b + 168 - width(glyphs, "See all >"), b + 83, "See all >", LINK)
